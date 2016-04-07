@@ -9,6 +9,9 @@
 
 <img alt="" class="mini-loader" src="https://github.com/daimashenjing/TanTanPhoto/blob/master/Screenshot/GIF_20160407_145036.gif?raw=true" height="850"  width="480" />
 
+##声明
 
 转载请注明来源：https://github.com/daimashenjing/TanTanPhoto
+
+
 
