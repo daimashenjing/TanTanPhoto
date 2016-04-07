@@ -5,7 +5,7 @@
 
 参考自 DragGridView 
 
-欢迎指点  欢迎一起修改 
+欢迎指点  欢迎一起修改  
 
 ##screenshot 
 
