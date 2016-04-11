@@ -40,10 +40,6 @@ import android.widget.ImageView.ScaleType;
  * 
  * @author szh QQ1095897632
  * 
- *         初写自定义控件 可扩展性不高 如果有需要 可以联系我
- * 
- *         后期不定期升级 完善扩展性
- * 
  */
 public class AlbumView extends ViewGroup implements OnTouchListener {
 
