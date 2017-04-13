@@ -27,7 +27,7 @@ public class MainActivity extends Activity implements OnClickListener, OnItemCli
 		setContentView(R.layout.activity_main);
 		mAlbumView = getId(R.id.imageListView);
 		mAlbumView.setRootView((GridLayout) getId(R.id.Rootlayout));
-		mAlbumView.setImages(new DemoUtils().moarItems(6, getImageDate()));
+		mAlbumView.setImages(new DemoUtils().moarItems(9, getImageDate()));
 		msetUserInfoLayout = getId(R.id.setUserInfoLayout);
 		msetUserInfoLayout.setOnClickListener(this);
 		mAlbumView.setOnItemClickListener(this);
@@ -37,40 +37,52 @@ public class MainActivity extends Activity implements OnClickListener, OnItemCli
 		// TODO Auto-generated method stub
 		List<PhotoItem> mDataList = new ArrayList<PhotoItem>();
 		PhotoItem item = new PhotoItem();
-		item.hyperlink = "drawable://" + R.drawable.head6;
+		item.hyperlink = "drawable://" + R.drawable.head1;
 		item.id = 1;
 		item.sort = 1;
 		mDataList.add(item);
 
 		item = new PhotoItem();
-		item.hyperlink = "drawable://" + R.drawable.head7;
+		item.hyperlink = "drawable://" + R.drawable.head2;
 		item.id = 2;
 		item.sort = 2;
 		mDataList.add(item);
 
 		item = new PhotoItem();
-		item.hyperlink = "drawable://" + R.drawable.head8;
+		item.hyperlink = "drawable://" + R.drawable.head3;
 		item.id = 3;
 		item.sort = 3;
 		mDataList.add(item);
 
 		item = new PhotoItem();
-		item.hyperlink = "drawable://" + R.drawable.head9;
+		item.hyperlink = "drawable://" + R.drawable.head4;
 		item.id = 4;
 		item.sort = 4;
 		mDataList.add(item);
 
-//		item = new PhotoItem();
-//		item.hyperlink = "drawable://" + R.drawable.head10;
-//		item.id = 5;
-//		item.sort = 5;
-//		mDataList.add(item);
-//
-//		item = new PhotoItem();
-//		item.hyperlink = "drawable://" + R.drawable.head1;
-//		item.id = 6;
-//		item.sort = 6;
-//		mDataList.add(item);
+		item = new PhotoItem();
+		item.hyperlink = "drawable://" + R.drawable.head5;
+		item.id = 5;
+		item.sort = 5;
+		mDataList.add(item);
+
+		item = new PhotoItem();
+		item.hyperlink = "drawable://" + R.drawable.head6;
+		item.id = 6;
+		item.sort = 6;
+		mDataList.add(item);
+		
+		item = new PhotoItem();
+		item.hyperlink = "drawable://" + R.drawable.head7;
+		item.id = 7;
+		item.sort = 7;
+		mDataList.add(item);
+		
+		item = new PhotoItem();
+		item.hyperlink = "drawable://" + R.drawable.head8;
+		item.id = 8;
+		item.sort = 8;
+		mDataList.add(item);
 
 		return mDataList;
 	}
@@ -92,10 +104,10 @@ public class MainActivity extends Activity implements OnClickListener, OnItemCli
 
 	}
 
+
 	@Override
-	public void ItemClick(View view, int position, boolean Photo) {
+	public void onItemClick(View view, int position, boolean Photo) {
 		// TODO Auto-generated method stub
-		// Photo 照片还是空格子
 		L.out("position", position + ",Photo : " + Photo);
 	}
 }

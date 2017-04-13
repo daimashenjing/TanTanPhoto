@@ -4,23 +4,20 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.nineoldandroids.animation.Animator;
-import com.nineoldandroids.animation.AnimatorListenerAdapter;
-import com.nineoldandroids.animation.AnimatorSet;
-import com.nineoldandroids.animation.ObjectAnimator;
-import com.nineoldandroids.animation.PropertyValuesHolder;
-import com.nineoldandroids.view.ViewHelper;
-import com.nostra13.universalimageloader.core.DisplayImageOptions;
-import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.utils.L;
 import com.szh.tantanphoto.dragalbum.entity.PhotoItem;
-import com.szh.tantanphoto.dragalbum.util.ImageUtils;
+import com.szh.tantanphoto.dragalbum.util.ImageLoad;
 import com.szh.tantanphoto.dragalbum.util.StringUtils;
 
-import android.animation.Animator.AnimatorListener;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
-import android.os.Handler;
+import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
@@ -29,6 +26,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.AbsListView;
 import android.widget.GridLayout;
@@ -37,27 +35,20 @@ import android.widget.ImageView.ScaleType;
 
 /**
  * 模仿探探 相册View
- * 
- * @author szh QQ1095897632
- * 
  */
 public class AlbumView extends ViewGroup implements OnTouchListener {
 
-	private List<View> views = new ArrayList<View>();
+	private List<ImageView> views = new ArrayList<ImageView>();
 	private List<PhotoItem> images = new ArrayList<PhotoItem>();
-
-	private ImageLoader mImageLoader = ImageLoader.getInstance();
-	private DisplayImageOptions mImageOptions;
-
+	// 动画处于停止状态
 	private boolean mAnimationEnd = true;
-
 	// 第一个最大的view的宽高
 	private int mItmeOne;
 	// item 其余宽高
 	private int ItemWidth;
-
+	// 当前隐藏控件的位置
 	private int hidePosition = -1;
-	// 根据数据 获取的 最大可拖拽移动换位的范围
+	// 根据数据 获取的 最大可拖拽的控件
 	private int maxSize;
 	// 当前控件 距离屏幕 顶点 的高度
 	private int mTopHeight = -1;
@@ -93,9 +84,16 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 
 	private GridLayout RootView;
 
+	int moveX;
+	int moveY;
+
+	int ItemDownX;
+	int ItemDownY;
+	long strTime;
+
 	/**
-	 * 为了兼容小米那个日了狗的系统 就不用 WindowManager了
-	 * 
+	 * 为了兼容小米那个日了狗的系统 就不用WindowManager了 如果本类生成view就不能拖到全屏 所以我们在最外层生成一个view传递过来
+	 *
 	 * @param rootView
 	 */
 	public void setRootView(GridLayout rootView) {
@@ -112,20 +110,17 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 
 	public AlbumView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
-		mImageOptions = ImageUtils.getFaceVideoOptions();
 		padding = dp2px(4, context);
 		initUI();
 	}
-
-	int moveX;
-	int moveY;
 
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev) {
 		// TODO Auto-generated method stub
 		switch (ev.getAction()) {
 		case MotionEvent.ACTION_DOWN:
-			mHandler.removeCallbacks(mDragRunnable);
+			isOnItemClick = false;
+			removeCallbacks(mDragRunnable);
 			mDownX = (int) ev.getX();
 			mDownY = (int) ev.getY();
 			mDragPosition = pointToPosition(mDownX, mDownY);
@@ -148,7 +143,7 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 					- mStartDragItemView.getTop();
 			dragOffsetX = (int) (ev.getRawX() - mDownX);
 			dragOffsetY = (int) (ev.getRawY() - mDownY);
-			mHandler.postDelayed(mDragRunnable, 50);
+			postDelayed(mDragRunnable, 50);
 			break;
 		case MotionEvent.ACTION_MOVE:
 			moveX = (int) ev.getX();
@@ -160,17 +155,54 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 			break;
 		case MotionEvent.ACTION_UP:
 			onStopDrag();
-			mHandler.removeCallbacks(mDragRunnable);
+			removeCallbacks(mDragRunnable);
 			break;
 		case MotionEvent.ACTION_CANCEL:
 			onStopDrag();
-			mHandler.removeCallbacks(mDragRunnable);
+			removeCallbacks(mDragRunnable);
 			break;
 		}
 		return super.dispatchTouchEvent(ev);
 	}
 
-	private Handler mHandler = new Handler();
+	@Override
+	public boolean onTouch(View v, MotionEvent event) {
+		// TODO Auto-generated method stub
+		switch (event.getAction()) {
+		case MotionEvent.ACTION_DOWN:
+			ItemDownX = (int) event.getX();
+			ItemDownY = (int) event.getY();
+			strTime = System.currentTimeMillis();
+			break;
+		case MotionEvent.ACTION_UP:
+			int mDragPosition = (Integer) v.getTag();
+			if (mDragPosition <= maxSize) {
+				int moveX = (int) event.getX();
+				int moveY = (int) event.getY();
+				int absMoveDistanceX = Math.abs(moveX - ItemDownX);
+				int absMoveDistanceY = Math.abs(moveY - ItemDownY);
+				if (absMoveDistanceX < 20 && absMoveDistanceY < 20 && (System.currentTimeMillis() - strTime) < 200) {
+					if (clickListener != null) {
+						isOnItemClick = true;
+						clickListener.onItemClick(getChildAt(mDragPosition), mDragPosition, true);
+					} else {
+						isOnItemClick = false;
+					}
+				} else {
+					isOnItemClick = false;
+				}
+			} else {
+				if (clickListener != null) {
+					isOnItemClick = true;
+					clickListener.onItemClick(getChildAt(mDragPosition), mDragPosition, false);
+				} else {
+					isOnItemClick = false;
+				}
+			}
+			break;
+		}
+		return true;
+	}
 
 	// 用来处理是否为长按的Runnable
 	private Runnable mDragRunnable = new Runnable() {
@@ -179,23 +211,20 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 			// 根据我们按下的点显示item镜像
 			if (isOnItemClick)
 				return;
-			createDragImage();
-			mStartDragItemView.setVisibility(View.GONE);
+			if (mStartDragItemView.isShown()) {
+				createDragImage();
+				mStartDragItemView.setVisibility(View.GONE);
+			}
 		}
 
 	};
 
-	private Rect mTouchFrame;
+	Rect frame = new Rect();
 
 	/**
 	 * 判断按下的位置是否在Item上 并返回Item的位置 {@link AbsListView #pointToPosition(int, int)}
 	 */
 	public int pointToPosition(int x, int y) {
-		Rect frame = mTouchFrame;
-		if (frame == null) {
-			mTouchFrame = new Rect();
-			frame = mTouchFrame;
-		}
 		int count = getChildCount();
 		for (int i = count - 1; i >= 0; i--) {
 			final View child = getChildAt(i);
@@ -208,30 +237,40 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 		}
 		return -1;
 	}
-	
+
+	ObjectAnimator translationAnimator;
+
 	/**
 	 * 创建拖动的镜像
-	 * 
-	 * @param bitmap
-	 * @param downX
-	 *            按下的点相对父控件的X坐标
-	 * @param downY
-	 *            按下的点相对父控件的X坐标
 	 */
 	private void createDragImage() {
 		int[] location = new int[2];
 		mStartDragItemView.getLocationOnScreen(location);
 		float drX = location[0];
 		float drY = location[1] - mTopHeight;
-		mDragImageView = new ImageView(getContext());
+		if (mDragImageView == null) {
+			mDragImageView = new ImageView(getContext());
+		} else {
+			ViewGroup parent = (ViewGroup) mDragImageView.getParent();
+			if (parent != null) {
+				parent.removeView(mDragImageView);// 先移除
+			}
+		}
 		mDragImageView.setImageBitmap(mDragBitmap);
 		RootView.addView(mDragImageView);
-
-		int drH = (int) (ItemWidth * 0.8);
-		float w = mStartDragItemView.getWidth();
-		final float scale = drH / w;
-		createTranslationAnimations(mDragImageView, drX, mDownX - dragPointX + dragOffsetX, drY,
-				mDownY - dragPointY + dragOffsetY - mTopHeight, scale, scale).setDuration(200).start();
+		float scale = (float) (ItemWidth * 0.8 / mStartDragItemView.getWidth());
+		float endX = mDownX - dragPointX + dragOffsetX;
+		float endY = mDownY - dragPointY + dragOffsetY - mTopHeight;
+		ObjectAnimator scaleAnimator = ObjectAnimator.ofPropertyValuesHolder(mDragImageView,
+				PropertyValuesHolder.ofFloat("scaleX", 1.0f, scale),
+				PropertyValuesHolder.ofFloat("scaleY", 1.0f, scale));
+		scaleAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+		scaleAnimator.setDuration(320).start();
+		translationAnimator = ObjectAnimator.ofPropertyValuesHolder(mDragImageView,
+				PropertyValuesHolder.ofFloat("translationX", drX, endX),
+				PropertyValuesHolder.ofFloat("translationY", drY, endY));
+		translationAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+		translationAnimator.setDuration(200).start();
 	}
 
 	/**
@@ -246,65 +285,22 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 		}
 	}
 
-	class resultSetListenerAdapter implements AnimatorListener {
-		View mStartDragItemView, mDragImageView;
-		boolean isStart;
-
-		public resultSetListenerAdapter(View mStartDragItemView, View mDragImageView, boolean isStart) {
-			// TODO Auto-generated constructor stub
-			this.mStartDragItemView = mStartDragItemView;
-			this.mDragImageView = mDragImageView;
-			this.isStart = isStart;
-		}
-
-		@Override
-		public void onAnimationStart(android.animation.Animator animation) {
-			// TODO Auto-generated method stub
-			if (isStart) {
-				mStartDragItemView.setVisibility(View.GONE);
-			}
-		}
-
-		@Override
-		public void onAnimationEnd(android.animation.Animator animation) {
-			// TODO Auto-generated method stub
-			if (!isStart) {
-				mStartDragItemView.setVisibility(View.VISIBLE);
-				RootView.removeView(mDragImageView);
-				mDragImageView = null;
-			}
-		}
-
-		@Override
-		public void onAnimationCancel(android.animation.Animator animation) {
-			// TODO Auto-generated method stub
-
-		}
-
-		@Override
-		public void onAnimationRepeat(android.animation.Animator animation) {
-			// TODO Auto-generated method stub
-
-		}
-
-	}
-
 	/**
 	 * 拖动item，在里面实现了item镜像的位置更新，item的相互交换以及GridView的自行滚动
-	 * 
-	 * @param x
-	 * @param y
 	 */
 	private void onDragItem(int X, int Y) {
 		if (mDragImageView != null) {
-			ViewHelper.setTranslationX(mDragImageView, X);
-			ViewHelper.setTranslationY(mDragImageView, Y);
+			if (translationAnimator != null && translationAnimator.isRunning()) {
+				translationAnimator.end();
+			}
+			ViewCompat.setTranslationX(mDragImageView, X);
+			ViewCompat.setTranslationY(mDragImageView, Y);
 		}
 	}
 
 	/**
 	 * 交换item
-	 * 
+	 *
 	 * @param moveX
 	 * @param moveY
 	 */
@@ -322,9 +318,6 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 
 	/**
 	 * 停止拖拽我们将之前隐藏的item显示出来，并将镜像移除
-	 * 
-	 * @param moveY
-	 * @param moveX
 	 */
 	private void onStopDrag() {
 		removeDragImage();
@@ -333,41 +326,20 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 
 	/**
 	 * 获取当前控件 距离屏幕 顶点 的高度
-	 * 
+	 *
 	 * @param context
 	 * @return
 	 */
 	private int getTopHeight(Context context) {
+		int[] location = new int[2];
+		getLocationOnScreen(location);
 		int statusHeight = 0;
-		Rect ViewRect = new Rect();
-		getGlobalVisibleRect(ViewRect);
-		statusHeight = ViewRect.top;
+		statusHeight = location[1];
 		if (0 == statusHeight) {
-			Rect localRect = new Rect();
-			getWindowVisibleDisplayFrame(localRect);
-			statusHeight = localRect.top;
-			if (0 == statusHeight) {
-				Class<?> localClass;
-				try {
-					localClass = Class.forName("com.android.internal.R$dimen");
-					Object localObject = localClass.newInstance();
-					int i5 = Integer.parseInt(localClass.getField("status_bar_height").get(localObject).toString());
-					statusHeight = context.getResources().getDimensionPixelSize(i5);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-			// 注意 如果上边方法 未能 获取成功 那么 请根据个人 应用情况 加上相应的值
-			// 比如 +45 我加的是一个 大概Title 的值
-			// 如果当前控件 上边 有其他控件 请加上其他控件的高度
-			statusHeight += dp2px(45, context);
+			getLocationInWindow(location);
+			statusHeight = location[1];
 		}
-
 		return statusHeight;
-	}
-
-	public int getItemWidth() {
-		return ItemWidth;
 	}
 
 	public void setImages(List<PhotoItem> images) {
@@ -394,11 +366,15 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 			if (!StringUtils.isEmpty(images.get(i).hyperlink)) {
 				maxSize = i;
 			}
-			mImageLoader.displayImage(images.get(i).hyperlink, view, mImageOptions);
+			ImageLoad.getInstance().loadPhotoImage(images.get(i).hyperlink, view);
 			views.add(view);
 			addView(view);
 		}
 		initListener();
+	}
+
+	private void onRefresh() {
+		initUI();
 	}
 
 	private void initListener() {
@@ -411,7 +387,7 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 
 	/**
 	 * 创建移动动画
-	 * 
+	 *
 	 * @param view
 	 * @param startX
 	 * @param endX
@@ -438,10 +414,6 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 		return animSetXY;
 	}
 
-	public boolean IsOneTwo(int Position) {
-		return Position == 1 || Position == 0;
-	}
-
 	@SuppressWarnings("unchecked")
 	public void swap(List<?> List, int index1, int index2) {
 		List<Object> rawList = (java.util.List<Object>) List;
@@ -450,64 +422,86 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 
 	/**
 	 * item的交换动画效果
-	 * 
+	 *
 	 * @param oldPosition
 	 * @param newPosition
 	 */
+	boolean isAniReverse1 = true;
+	boolean isAniReverse2 = true;
+
 	public void animateReorder(int oldPosition, int newPosition) {
 		boolean isForward = newPosition > oldPosition;
-		final List<Animator> resultList = new LinkedList<Animator>();
+		List<Animator> resultList = new LinkedList<Animator>();
 		if (isForward) {
 			for (int pos = oldPosition + 1; pos <= newPosition; pos++) {
 				View view = getChildAt(pos);
-				if (pos == 1) {
-					float h = view.getWidth() / 2;
-					float mSpacing = padding / 2;
-					float w = getChildAt(0).getWidth();
-					float scale = w / view.getWidth();
-					resultList.add(createTranslationAnimations(view, 0, -(view.getWidth() + padding + mSpacing + h), 0,
-							h + mSpacing, scale, scale));
-					swap(images, pos, pos - 1);
+				if (pos < 6) {
+					if (pos == 1) {
+						float h = view.getWidth() / 2;
+						float mSpacing = padding / 2;
+						float w = getChildAt(0).getWidth();
+						float scale = w / view.getWidth();
+						resultList.add(createTranslationAnimations(view, 0, -(view.getWidth() + padding + mSpacing + h),
+								0, h + mSpacing, scale, scale));
+					}
+					if (pos == 2 || pos == 3) {
+						resultList.add(createTranslationAnimations(view, 0, 0, 0, -(view.getWidth() + padding)));
+					}
+					if (pos == 4 || pos == 5) {
+						resultList.add(createTranslationAnimations(view, 0, view.getWidth() + padding, 0, 0));
+					}
+				} else {
+					if (pos % 3 == 0) {
+						if (pos % 6 == 0) {
+							isAniReverse1 = true;
+						} else {
+							isAniReverse1 = false;
+						}
+						resultList.add(createTranslationAnimations(view, 0, 0, 0, -(view.getWidth() + padding)));
+					} else {
+						if (isAniReverse1) {
+							resultList.add(createTranslationAnimations(view, 0, -view.getWidth() + padding, 0, 0));
+						} else {
+							resultList.add(createTranslationAnimations(view, 0, view.getWidth() + padding, 0, 0));
+						}
+					}
+
 				}
-				if (pos == 2) {
-					resultList.add(createTranslationAnimations(view, 0, 0, 0, -(view.getWidth() + padding)));
-					swap(images, pos, pos - 1);
-				}
-				if (pos == 3) {
-					resultList.add(createTranslationAnimations(view, 0, 0, 0, -(view.getWidth() + padding)));
-					swap(images, pos, pos - 1);
-				}
-				if (pos == 4) {
-					resultList.add(createTranslationAnimations(view, 0, view.getWidth() + padding, 0, 0));
-					swap(images, pos, pos - 1);
-				}
-				if (pos == 5) {
-					resultList.add(createTranslationAnimations(view, 0, view.getWidth() + padding, 0, 0));
-					swap(images, pos, pos - 1);
-				}
+				swap(images, pos, pos - 1);
 			}
 		} else {
 			for (int pos = newPosition; pos < oldPosition; pos++) {
 				View view = getChildAt(pos);
-				if (pos == 0) {
-					float h = getChildAt(1).getWidth() / 2;
-					float mSpacing = padding / 2;
-					float w = getChildAt(0).getWidth();
-					float scale = getChildAt(1).getWidth() / w;
-					resultList.add(createTranslationAnimations(view, 0,
-							getChildAt(1).getWidth() + padding + mSpacing + h, 0, -(h + mSpacing), scale, scale));
-				}
-				if (pos == 1) {
-					resultList.add(createTranslationAnimations(view, 0, 0, 0, view.getWidth() + padding));
-				}
-				if (pos == 2) {
-					resultList.add(createTranslationAnimations(view, 0, 0, 0, view.getWidth() + padding));
-				}
-				if (pos == 3) {
-					resultList.add(createTranslationAnimations(view, 0, -(view.getWidth() + padding), 0, 0));
-				}
-				if (pos == 4) {
-					resultList.add(createTranslationAnimations(view, 0, -(view.getWidth() + padding), 0, 0));
+				if (pos < 5) {
+					if (pos == 0) {
+						float h = getChildAt(1).getWidth() / 2;
+						float mSpacing = padding / 2;
+						float w = getChildAt(0).getWidth();
+						float scale = getChildAt(1).getWidth() / w;
+						resultList.add(createTranslationAnimations(view, 0,
+								getChildAt(1).getWidth() + padding + mSpacing + h, 0, -(h + mSpacing), scale, scale));
+					}
+					if (pos == 1 || pos == 2) {
+						resultList.add(createTranslationAnimations(view, 0, 0, 0, view.getWidth() + padding));
+					}
+					if (pos == 3 || pos == 4) {
+						resultList.add(createTranslationAnimations(view, 0, -(view.getWidth() + padding), 0, 0));
+					}
+				} else {
+					if ((pos + 1) % 3 == 0) {
+						if ((pos + 1) % 6 == 0) {
+							isAniReverse2 = true;
+						} else {
+							isAniReverse2 = false;
+						}
+						resultList.add(createTranslationAnimations(view, 0, 0, 0, view.getWidth() + padding));
+					} else {
+						if (isAniReverse2) {
+							resultList.add(createTranslationAnimations(view, 0, (view.getWidth() + padding), 0, 0));
+						} else {
+							resultList.add(createTranslationAnimations(view, 0, -(view.getWidth() + padding), 0, 0));
+						}
+					}
 				}
 			}
 			for (int i = oldPosition; i > newPosition; i--) {
@@ -516,7 +510,9 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 		}
 
 		hidePosition = newPosition;
-		resultSet = new AnimatorSet();
+		if (resultSet == null) {
+			resultSet = new AnimatorSet();
+		}
 		resultSet.playTogether(resultList);
 		resultSet.setDuration(150);
 		resultSet.setInterpolator(new OvershootInterpolator(1.6f));
@@ -531,10 +527,9 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 			public void onAnimationEnd(Animator arg0) {
 				// TODO Auto-generated method stub
 				if (!mAnimationEnd) {
-					initUI();
+					onRefresh();
 					resultSet.removeAllListeners();
 					resultSet.clone();
-					resultSet = null;
 					mDragPosition = hidePosition;
 				}
 				mAnimationEnd = true;
@@ -553,51 +548,7 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 	}
 
 	public interface OnItemClickListener {
-		public void ItemClick(View view, int position, boolean Photo);
-
-	}
-
-	int ItemDownX;
-	int ItemDownY;
-	long strTime;
-
-	@Override
-	public boolean onTouch(View v, MotionEvent event) {
-		// TODO Auto-generated method stub
-		switch (event.getAction()) {
-		case MotionEvent.ACTION_DOWN:
-			ItemDownX = (int) event.getX();
-			ItemDownY = (int) event.getY();
-			strTime = System.currentTimeMillis();
-			break;
-		case MotionEvent.ACTION_UP:
-			int mDragPosition = (Integer) v.getTag();
-			if (mDragPosition <= maxSize) {
-				int moveX = (int) event.getX();
-				int moveY = (int) event.getY();
-				float abslMoveDistanceX = Math.abs(moveX - ItemDownX);
-				float abslMoveDistanceY = Math.abs(moveY - ItemDownY);
-				if (abslMoveDistanceX < 2.0 && abslMoveDistanceY < 2.0 && (System.currentTimeMillis() - strTime) < 50) {
-					if (clickListener != null) {
-						isOnItemClick = true;
-						clickListener.ItemClick(getChildAt(mDragPosition), mDragPosition, true);
-					} else {
-						isOnItemClick = false;
-					}
-				} else {
-					isOnItemClick = false;
-				}
-			} else {
-				if (clickListener != null) {
-					isOnItemClick = true;
-					clickListener.ItemClick(getChildAt(mDragPosition), mDragPosition, false);
-				} else {
-					isOnItemClick = false;
-				}
-			}
-			break;
-		}
-		return true;
+		public void onItemClick(View view, int position, boolean Photo);
 	}
 
 	public void onResume() {
@@ -605,12 +556,16 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 	}
 
 	public void onPause() {
-		mImageLoader.clearMemoryCache();
+		ImageLoad.getInstance().clearMemoryCache();
 	}
 
 	public void onDestroy() {
 
 	}
+
+	int mItemCount = 1;
+	boolean isReverse = false;
+	int mViewHeight = 0;
 
 	@Override
 	protected void onLayout(boolean changed, int l, int t, int r, int b) {
@@ -626,17 +581,23 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 				view.layout(l, t, l + mItmeOne, t + mItmeOne);
 				l += mItmeOne + padding;
 			}
-			if (i == 1) {
-				view.layout(l, t, l + ItemWidth, t + ItemWidth);
-				t += ItemWidth + padding;
-			}
-			if (i == 2) {
+			if (i == 1 || i == 2) {
 				view.layout(l, t, l + ItemWidth, t + ItemWidth);
 				t += ItemWidth + padding;
 			}
 			if (i >= 3) {
 				view.layout(l, t, l + ItemWidth, t + ItemWidth);
-				l -= ItemWidth + padding;
+				if (mItemCount % 3 == 0) {
+					isReverse = !isReverse;
+					t += ItemWidth + padding;
+				} else {
+					if (isReverse) {
+						l += ItemWidth + padding;
+					} else {
+						l -= ItemWidth + padding;
+					}
+				}
+				mItemCount++;
 			}
 
 			if (i == hidePosition) {
@@ -644,6 +605,7 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 				mStartDragItemView = view;
 			}
 		}
+		mViewHeight = t;
 	}
 
 	@Override
@@ -667,21 +629,20 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 			resWidth = getSuggestedMinimumWidth();
 			// 如果未设置背景图片，则设置为屏幕宽高的默认值
 			resWidth = resWidth == 0 ? getDefaultWidth() : resWidth;
-
 			resHeight = getSuggestedMinimumHeight();
+			L.e("asd", "asdasd:" + resHeight);
 			// 如果未设置背景图片，则设置为屏幕宽高的默认值
-			resHeight = resHeight == 0 ? getDefaultWidth() : resHeight;
+			resHeight = resHeight == 0 ? mViewHeight : resHeight;
 		} else {
 			// 如果都设置为精确值，则直接取小值；
 			resWidth = resHeight = Math.min(width, height);
 		}
-
 		setMeasuredDimension(resWidth, resHeight);
 	}
 
 	/**
 	 * 获得默认该layout的尺寸
-	 * 
+	 *
 	 * @return
 	 */
 	private int getDefaultWidth() {
@@ -700,10 +661,8 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 	public void onWindowFocusChanged(boolean hasFocus) {
 		// TODO Auto-generated method stub
 		super.onWindowFocusChanged(hasFocus);
-		if (hasFocus) {
-			if (mTopHeight <= 0) {
-				mTopHeight = getTopHeight(getContext());
-			}
+		if (mTopHeight <= 0) {
+			mTopHeight = getTopHeight(getContext());
 		}
 	}
 
