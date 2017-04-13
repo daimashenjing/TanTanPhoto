@@ -4,6 +4,7 @@
 2.优化了点击事件
 3.增加了可扩展性 支持6张以上的图片 9张 12张甚至更多  如果屏幕还装得下的话 
 4.增加了AndroidStudio版本
+AndroidStudio地址: https://github.com/daimashenjing/BaseAndroid
 
 # TanTanPhoto
 这是一个类似于探探相册
