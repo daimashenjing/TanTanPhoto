@@ -1,5 +1,5 @@
 #Internal package file, do not edit.
-#Fri Mar 02 13:16:37 CST 2018
+#Fri Mar 02 13:24:21 CST 2018
 19.set=ANDROID_RESOURCE
 8.set=ANDROID_RESOURCE
 1.base=C\:\\Users\\Administrator\\Desktop\\TanTanPhoto\\app\\build\\intermediates\\res\\debug\\resources-debug.ap_

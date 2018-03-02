@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends Activity implements OnClickListener, OnItemClickListener {
-	private AlbumView mAlbumView;
+	private AlbumView      mAlbumView;
 	private RelativeLayout msetUserInfoLayout;
 
 	@Override
@@ -66,12 +66,12 @@ public class MainActivity extends Activity implements OnClickListener, OnItemCli
 		item.sort = 5;
 		mDataList.add(item);
 
-		item = new PhotoItem();
-		item.hyperlink = "drawable://" + R.drawable.head6;
-		item.id = 6;
-		item.sort = 6;
-		mDataList.add(item);
-		
+//		item = new PhotoItem();
+//		item.hyperlink = "drawable://" + R.drawable.head6;
+//		item.id = 6;
+//		item.sort = 6;
+//		mDataList.add(item);
+//
 //		item = new PhotoItem();
 //		item.hyperlink = "drawable://" + R.drawable.head7;
 //		item.id = 7;

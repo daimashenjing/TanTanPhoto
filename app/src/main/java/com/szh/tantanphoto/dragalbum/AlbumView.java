@@ -1,14 +1,5 @@
 package com.szh.tantanphoto.dragalbum;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import com.nostra13.universalimageloader.utils.L;
-import com.szh.tantanphoto.dragalbum.entity.PhotoItem;
-import com.szh.tantanphoto.dragalbum.util.ImageLoad;
-import com.szh.tantanphoto.dragalbum.util.StringUtils;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
@@ -33,15 +24,25 @@ import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 
+import com.nostra13.universalimageloader.utils.L;
+import com.szh.tantanphoto.dragalbum.entity.PhotoItem;
+import com.szh.tantanphoto.dragalbum.util.ImageLoad;
+import com.szh.tantanphoto.dragalbum.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * 模仿探探 相册View
  */
-public class AlbumView extends ViewGroup implements OnTouchListener {
+public class AlbumView
+        extends ViewGroup implements OnTouchListener {
 
-	private List<ImageView> views = new ArrayList<ImageView>();
-	private List<PhotoItem> images = new ArrayList<PhotoItem>();
+	private List<ImageView> views         = new ArrayList<ImageView>();
+	private List<PhotoItem> images        = new ArrayList<PhotoItem>();
 	// 动画处于停止状态
-	private boolean mAnimationEnd = true;
+	private boolean         mAnimationEnd = true;
 	// 第一个最大的view的宽高
 	private int mItmeOne;
 	// item 其余宽高
@@ -143,7 +144,7 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 					- mStartDragItemView.getTop();
 			dragOffsetX = (int) (ev.getRawX() - mDownX);
 			dragOffsetY = (int) (ev.getRawY() - mDownY);
-			postDelayed(mDragRunnable, 50);
+			postDelayed(mDragRunnable, 100);
 			break;
 		case MotionEvent.ACTION_MOVE:
 			moveX = (int) ev.getX();
@@ -212,6 +213,8 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 			if (isOnItemClick)
 				return;
 			if (mStartDragItemView.isShown()) {
+				// 请求父容器不要拦截我的事件
+				getParent().requestDisallowInterceptTouchEvent(true);
 				createDragImage();
 				mStartDragItemView.setVisibility(View.GONE);
 			}
@@ -563,13 +566,19 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 
 	}
 
-	int mItemCount = 1;
 	boolean isReverse = false;
+	int mItemCount = 1;
 	int mViewHeight = 0;
+
+	private void init(){
+		isReverse = false;
+		mItemCount = 1;
+	}
 
 	@Override
 	protected void onLayout(boolean changed, int l, int t, int r, int b) {
 		// TODO Auto-generated method stub
+		init();
 		int Width = getMeasuredWidth();
 		ItemWidth = Width / 3 - padding - (padding / 3);
 		for (int i = 0, size = getChildCount(); i < size; i++) {
@@ -590,14 +599,19 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 				if (mItemCount % 3 == 0) {
 					isReverse = !isReverse;
 					t += ItemWidth + padding;
+					// view的高度
+					mViewHeight = t;
 				} else {
 					if (isReverse) {
 						l += ItemWidth + padding;
 					} else {
 						l -= ItemWidth + padding;
 					}
+					// view的高度
+					mViewHeight = t+ItemWidth;
 				}
 				mItemCount++;
+
 			}
 
 			if (i == hidePosition) {
@@ -605,7 +619,6 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 				mStartDragItemView = view;
 			}
 		}
-		mViewHeight = t;
 	}
 
 	@Override
