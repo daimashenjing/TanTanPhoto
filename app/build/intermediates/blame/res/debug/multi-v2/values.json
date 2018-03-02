@@ -1,0 +1,79 @@
+{
+    "logs": [
+        {
+            "outputFile": "C:\\Users\\Administrator\\Desktop\\TanTanPhoto\\app\\build\\intermediates\\incremental\\mergeDebugResources\\merged.dir\\values\\values.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\Administrator\\Desktop\\TanTanPhoto\\app\\src\\main\\res\\values\\styles.xml",
+                    "from": {
+                        "startLines": "7,17,29,21",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "192,524,1036,689",
+                        "endLines": "14,19,33,27",
+                        "endColumns": "12,12,12,12",
+                        "endOffsets": "483,681,1246,1024"
+                    },
+                    "to": {
+                        "startLines": "9,17,20,25",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "408,700,860,1071",
+                        "endLines": "16,19,24,31",
+                        "endColumns": "12,12,12,12",
+                        "endOffsets": "695,855,1066,1400"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\Administrator\\Desktop\\TanTanPhoto\\app\\src\\main\\res\\values\\color.xml",
+                    "from": {
+                        "startLines": "5,4",
+                        "startColumns": "4,4",
+                        "startOffsets": "117,76",
+                        "endColumns": "43,39",
+                        "endOffsets": "156,111"
+                    },
+                    "to": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,99",
+                        "endColumns": "43,39",
+                        "endOffsets": "94,134"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\Administrator\\Desktop\\TanTanPhoto\\app\\src\\main\\res\\values\\strings.xml",
+                    "from": {
+                        "startLines": "5,3,4",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "163,59,109",
+                        "endColumns": "52,48,52",
+                        "endOffsets": "211,103,157"
+                    },
+                    "to": {
+                        "startLines": "6,7,8",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "253,306,355",
+                        "endColumns": "52,48,52",
+                        "endOffsets": "301,350,403"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\Administrator\\Desktop\\TanTanPhoto\\app\\src\\main\\res\\values\\dimens.xml",
+                    "from": {
+                        "startLines": "3,4",
+                        "startColumns": "4,4",
+                        "startOffsets": "92,151",
+                        "endColumns": "57,55",
+                        "endOffsets": "145,202"
+                    },
+                    "to": {
+                        "startLines": "4,5",
+                        "startColumns": "4,4",
+                        "startOffsets": "139,197",
+                        "endColumns": "57,55",
+                        "endOffsets": "192,248"
+                    }
+                }
+            ]
+        }
+    ]
+}
