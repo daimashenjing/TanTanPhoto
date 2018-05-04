@@ -92,7 +92,7 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 	long strTime;
 
 	/**
-	 * 为了兼容小米那个日了狗的系统 就不用WindowManager了 如果本类生成view就不能拖到全屏 所以我们在最外层生成一个view传递过来
+	 * 为了兼容小米等系统 就不用WindowManager了 如果本类生成view就不能拖到全屏 所以我们在最外层生成一个view传递过来
 	 *
 	 * @param rootView
 	 */
@@ -574,6 +574,8 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 
 	private void setViewsLayout(int resWidth, int l, int t) {
 		ItemWidth = resWidth / 3 - padding - (padding / 3);
+        mItemCount = 1;
+        isReverse = false;
 		for (int i = 0, size = getChildCount(); i < size; i++) {
 			View view = getChildAt(i);
 			if (i == 0) {
@@ -588,8 +590,6 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 				t += ItemWidth + padding;
 			}
 			if (i >= 3) {
-				if (i == 3)
-					isReverse = false;
 				view.layout(l, t, l + ItemWidth, t + ItemWidth);
 				if (mItemCount % 3 == 0) {
 					isReverse = !isReverse;

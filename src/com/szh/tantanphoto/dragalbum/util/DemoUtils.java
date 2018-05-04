@@ -18,6 +18,7 @@ public class DemoUtils {
 			position++;
 			items.add(Datas.get(i));
 		}
+		
 		// 添加null
 		while (position < maxNum) {
 			position++;
