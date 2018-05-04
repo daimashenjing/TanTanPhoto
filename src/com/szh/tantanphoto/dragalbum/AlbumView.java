@@ -212,6 +212,8 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 			if (isOnItemClick)
 				return;
 			if (mStartDragItemView.isShown()) {
+			     // 请求父容器不要拦截我的事件
+                getParent().requestDisallowInterceptTouchEvent(true);
 				createDragImage();
 				mStartDragItemView.setVisibility(View.GONE);
 			}
