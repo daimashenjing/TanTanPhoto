@@ -10,13 +10,17 @@ public class DemoUtils {
 	public DemoUtils() {
 	}
 
-	public List<PhotoItem> moarItems(int qty, List<PhotoItem> Datas) {
+	public List<PhotoItem> moarItems(int maxNum, List<PhotoItem> Datas) {
 		List<PhotoItem> items = new ArrayList<PhotoItem>();
-		if(Datas!=null){
-			items.addAll(Datas);
+		int position = 0;
+		int len = Datas != null ? Datas.size() : 0;
+		for (int i = 0; (i < len && i < maxNum); i++) {
+			position++;
+			items.add(Datas.get(i));
 		}
-		//添加null
-		for (int i = Datas == null ? 0 : Datas.size(); i < qty; i++) {
+		// 添加null
+		while (position < maxNum) {
+			position++;
 			items.add(new PhotoItem());
 		}
 		return items;

@@ -569,9 +569,11 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 
 	@Override
 	protected void onLayout(boolean changed, int l, int t, int r, int b) {
-		// TODO Auto-generated method stub
-		int Width = getMeasuredWidth();
-		ItemWidth = Width / 3 - padding - (padding / 3);
+		//
+	}
+
+	private void setViewsLayout(int resWidth, int l, int t) {
+		ItemWidth = resWidth / 3 - padding - (padding / 3);
 		for (int i = 0, size = getChildCount(); i < size; i++) {
 			View view = getChildAt(i);
 			if (i == 0) {
@@ -586,6 +588,8 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 				t += ItemWidth + padding;
 			}
 			if (i >= 3) {
+				if (i == 3)
+					isReverse = false;
 				view.layout(l, t, l + ItemWidth, t + ItemWidth);
 				if (mItemCount % 3 == 0) {
 					isReverse = !isReverse;
@@ -599,13 +603,15 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 				}
 				mItemCount++;
 			}
-
 			if (i == hidePosition) {
 				view.setVisibility(View.GONE);
 				mStartDragItemView = view;
 			}
 		}
-		mViewHeight = t;
+		if (mViewHeight != t) {
+			mViewHeight = t;
+		}
+
 	}
 
 	@Override
@@ -625,17 +631,15 @@ public class AlbumView extends ViewGroup implements OnTouchListener {
 		 * 如果宽或者高的测量模式非精确值
 		 */
 		if (widthMode != MeasureSpec.EXACTLY || heightMode != MeasureSpec.EXACTLY) {
-			// 主要设置为背景图的高度
 			resWidth = getSuggestedMinimumWidth();
-			// 如果未设置背景图片，则设置为屏幕宽高的默认值
 			resWidth = resWidth == 0 ? getDefaultWidth() : resWidth;
+			setViewsLayout(resWidth, 0, 0);
 			resHeight = getSuggestedMinimumHeight();
-			L.e("asd", "asdasd:" + resHeight);
-			// 如果未设置背景图片，则设置为屏幕宽高的默认值
 			resHeight = resHeight == 0 ? mViewHeight : resHeight;
 		} else {
-			// 如果都设置为精确值，则直接取小值；
-			resWidth = resHeight = Math.min(width, height);
+			resWidth = width;
+			setViewsLayout(resWidth, 0, 0);
+			resHeight = height;
 		}
 		setMeasuredDimension(resWidth, resHeight);
 	}
